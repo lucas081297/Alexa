@@ -1,0 +1,420 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "minhas finanças",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "HelloWorldIntent",
+          "slots": [],
+          "samples": [
+            "olá",
+            "como vai você",
+            "diga oi mundo",
+            "diga oi",
+            "oi",
+            "diga olá mundo",
+            "diga olá"
+          ]
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "CadContaIntent",
+          "slots": [
+            {
+              "name": "cont_name",
+              "type": "AMAZON.SearchQuery",
+              "samples": [
+                "{cont_name}"
+              ]
+            },
+            {
+              "name": "cont_valor",
+              "type": "AMAZON.NUMBER",
+              "samples": [
+                "{cont_valor}"
+              ]
+            },
+            {
+              "name": "cont_venc",
+              "type": "AMAZON.DATE",
+              "samples": [
+                "{cont_venc}"
+              ]
+            },
+            {
+              "name": "cont_period",
+              "type": "Period",
+              "samples": [
+                "{cont_period}"
+              ]
+            }
+          ],
+          "samples": [
+            "cadastro de conta",
+            "quero cadastrar uma conta",
+            "cadastar uma conta",
+            "quero cadastrar conta",
+            "cadastrar conta"
+          ]
+        },
+        {
+          "name": "VerContaIntent",
+          "slots": [],
+          "samples": [
+            "ver conta"
+          ]
+        },
+        {
+          "name": "SaveContIntent",
+          "slots": [],
+          "samples": []
+        }
+      ],
+      "types": [
+        {
+          "values": [
+            {
+              "name": {
+                "value": "a"
+              }
+            }
+          ],
+          "name": "String"
+        },
+        {
+          "values": [
+            {
+              "name": {
+                "value": "24"
+              }
+            },
+            {
+              "name": {
+                "value": "23"
+              }
+            },
+            {
+              "name": {
+                "value": "22"
+              }
+            },
+            {
+              "name": {
+                "value": "21"
+              }
+            },
+            {
+              "name": {
+                "value": "20"
+              }
+            },
+            {
+              "name": {
+                "value": "19"
+              }
+            },
+            {
+              "name": {
+                "value": "18"
+              }
+            },
+            {
+              "name": {
+                "value": "17"
+              }
+            },
+            {
+              "name": {
+                "value": "16"
+              }
+            },
+            {
+              "name": {
+                "value": "15"
+              }
+            },
+            {
+              "name": {
+                "value": "14"
+              }
+            },
+            {
+              "name": {
+                "value": "13"
+              }
+            },
+            {
+              "name": {
+                "value": "12"
+              }
+            },
+            {
+              "name": {
+                "value": "11"
+              }
+            },
+            {
+              "name": {
+                "value": "10"
+              }
+            },
+            {
+              "name": {
+                "value": "9"
+              }
+            },
+            {
+              "name": {
+                "value": "8"
+              }
+            },
+            {
+              "name": {
+                "value": "7"
+              }
+            },
+            {
+              "name": {
+                "value": "6"
+              }
+            },
+            {
+              "name": {
+                "value": "5"
+              }
+            },
+            {
+              "name": {
+                "value": "4"
+              }
+            },
+            {
+              "name": {
+                "value": "3"
+              }
+            },
+            {
+              "name": {
+                "value": "2"
+              }
+            },
+            {
+              "name": {
+                "value": "1"
+              }
+            }
+          ],
+          "name": "Dia"
+        },
+        {
+          "values": [
+            {
+              "name": {
+                "value": "0"
+              }
+            },
+            {
+              "name": {
+                "value": "12"
+              }
+            },
+            {
+              "name": {
+                "value": "11"
+              }
+            },
+            {
+              "name": {
+                "value": "10"
+              }
+            },
+            {
+              "name": {
+                "value": "9"
+              }
+            },
+            {
+              "name": {
+                "value": "8"
+              }
+            },
+            {
+              "name": {
+                "value": "7"
+              }
+            },
+            {
+              "name": {
+                "value": "6"
+              }
+            },
+            {
+              "name": {
+                "value": "5"
+              }
+            },
+            {
+              "name": {
+                "value": "4"
+              }
+            },
+            {
+              "name": {
+                "value": "3"
+              }
+            },
+            {
+              "name": {
+                "value": "2"
+              }
+            },
+            {
+              "name": {
+                "value": "1"
+              }
+            }
+          ],
+          "name": "Period"
+        },
+        {
+          "values": [
+            {
+              "name": {
+                "value": "1"
+              }
+            }
+          ],
+          "name": "Valor"
+        }
+      ]
+    },
+    "dialog": {
+      "intents": [
+        {
+          "name": "CadContaIntent",
+          "confirmationRequired": true,
+          "prompts": {
+            "confirmation": "Confirm.Intent.121880584738"
+          },
+          "slots": [
+            {
+              "name": "cont_name",
+              "type": "AMAZON.SearchQuery",
+              "elicitationRequired": true,
+              "confirmationRequired": false,
+              "prompts": {
+                "elicitation": "Elicit.Slot.121880584738.429801286527"
+              }
+            },
+            {
+              "name": "cont_valor",
+              "type": "AMAZON.NUMBER",
+              "elicitationRequired": true,
+              "confirmationRequired": false,
+              "prompts": {
+                "elicitation": "Elicit.Slot.121880584738.402346292588"
+              }
+            },
+            {
+              "name": "cont_venc",
+              "type": "AMAZON.DATE",
+              "elicitationRequired": true,
+              "confirmationRequired": false,
+              "prompts": {
+                "elicitation": "Elicit.Slot.1108705606488.1615499252631"
+              }
+            },
+            {
+              "name": "cont_period",
+              "type": "Period",
+              "elicitationRequired": true,
+              "confirmationRequired": false,
+              "prompts": {
+                "elicitation": "Elicit.Slot.1108705606488.657394442163"
+              },
+              "validations": [
+                {
+                  "type": "hasEntityResolutionMatch",
+                  "prompt": "Slot.Validation.1003449185954.459769649946.1518172173440"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "delegationStrategy": "ALWAYS"
+    },
+    "prompts": [
+      {
+        "id": "Elicit.Slot.121880584738.429801286527",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Qual o nome da conta que quer cadastrar?"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.121880584738.402346292588",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Qual o valor da conta?"
+          }
+        ]
+      },
+      {
+        "id": "Confirm.Intent.121880584738",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Sua conta é {cont_name} de valor {cont_valor} com vencimento em {cont_venc} . Você confirma?"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.1108705606488.1615499252631",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Qual é a data do vencimento?"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.1108705606488.657394442163",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Fale a frequencia da conta. Exemplo - Diga zero se for única. Um se for mensal. Dois bimensal, etc."
+          }
+        ]
+      },
+      {
+        "id": "Slot.Validation.1003449185954.459769649946.1518172173440",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Diga um número válido de zero a doze"
+          }
+        ]
+      }
+    ]
+  },
+  "version": "11"
+}
