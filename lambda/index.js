@@ -3,49 +3,38 @@
  * Please visit https://alexa.design/cookbook for additional examples on implementing slots, dialog management,
  * session persistence, api calls, and more.
  * */
-const moment = require("moment-timezone");
-var persistenceAdapter = getPersistenceAdapter();
 const Alexa = require('ask-sdk-core');
-
-function getPersistenceAdapter(tableName){
-    function isAlexaHosted(){
-        return process.env.S3_PERSISTENCE_BUCKET;
-    }
-    if (isAlexaHosted()){
-        const {S3PersistenceAdapter} = require("ask-sdk-s3-persistence-adapter");
-        return new S3PersistenceAdapter({
-            bucketName: process.env.S3_PERSISTENCE_BUCKET
-        });
-    }
-    else{
-        const {DynamoDbPersistenceAdapter} = require("ask-sdk-dynamodb-persistence-adapter");
-        return new DynamoDbPersistenceAdapter({
-            tableName: tableName,
-            createTable: true
-        });
-    }
-}
+const constants = require('./constants');
+const persistenceAdapter = require('ask-sdk-s3-persistence-adapter');
 
 const LaunchRequestHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
     },
     handle(handlerInput) {
-        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-        const cont_name = sessionAttributes["cont_name"];
-        const cont_valor = sessionAttributes["cont_valor"];
-        const cont_venc = sessionAttributes["cont_venc"];
-        const cont_period = sessionAttributes["cont_period"];
-        const sessionCounter = sessionAttributes ["sessionCounter"];
+        const speakOutput = constants.WELCOME_MSG;
         
-        const speakOutput = 'Bem vindo a Skill Minhas Finanças';
-
+        const attributesManager = handlerInput.attributesManager;
+        const persistentAttributes = attributesManager.getPersistentAttributes();
+        
+        inicializaS3(attributesManager, persistentAttributes)
+        
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(speakOutput)
             .getResponse();
     }
 };
+
+async function inicializaS3(attributesManager, persistentAttributes){
+    //console.log(`---- COMECOU O SINCRONISMO S3  `);
+        //caso não tenha nenhum medicamento ainda, cria um campo para ele
+    if (!persistentAttributes.nomeAttributes) {
+        persistentAttributes.nomeAttributes = [];
+    }
+    attributesManager.setPersistentAttributes(persistentAttributes);
+    await attributesManager.savePersistentAttributes();
+}
 
 const HelloWorldIntentHandler = {
     canHandle(handlerInput) {
@@ -62,83 +51,176 @@ const HelloWorldIntentHandler = {
     }
 };
 
+
 const CadContaIntentHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'CadContaIntent';
     },
-    handle(handlerInput) {
+    async handle(handlerInput) {
+        
         const {attributesManager, requestEnvelope} = handlerInput;
+        // the attributes manager allows us to access session attributes
         const sessionAttributes = attributesManager.getSessionAttributes();
         const {intent} = requestEnvelope.request;
         
-        if(intent.confirmationSatus === "CONFIRMED"){
-            const cont_name = Alexa.getSlotValue(requestEnvelope, "cont_name");
-            const cont_valor = Alexa.getSlotValue(requestEnvelope, "cont_valor");
-            const cont_venc = Alexa.getSlotValue(requestEnvelope, "cont_venc");
-            const cont_period = Alexa.getSlotValue(requestEnvelope, "cont_period");
-            
-            sessionAttributes["cont_name"] = cont_name;
-            sessionAttributes["cont_valor"] = cont_valor;
-            sessionAttributes["cont_venc"] = cont_venc;
-            sessionAttributes["cont_period"] = cont_period;
-            return VerContaIntentHandler.handle(handlerInput);
-        }
+         if (intent.confirmationStatus === 'CONFIRMED') {
+            let cont_name = Alexa.getSlotValue(requestEnvelope, 'cont_name');
+            let cont_valor = Alexa.getSlotValue(requestEnvelope, 'cont_valor');
+            let cont_venc = Alexa.getSlotValue(requestEnvelope, 'cont_venc');
+            let cont_period = Alexa.getSlotValue(requestEnvelope, 'cont_period');
+            console.log(`----- CONFIRMACAO = ${intent.confirmationStatus}`);
+            console.log(cont_name,cont_valor,cont_venc,cont_period);
+        
+            let nomeAttributes = {
+                "cont_name" : cont_name,
+                "cont_valor" : cont_valor,
+                "cont_venc" : cont_venc,
+                "cont_period": cont_period
+            };
+        
+            attributesManager.setPersistentAttributes(nomeAttributes);
+            await attributesManager.savePersistentAttributes();
+         }
 
         return handlerInput.responseBuilder
             //.speak(speakOutput)
-            //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+            //.reprompt('Como posso te ajudar?')
             .getResponse();
     }
 };
 
-/*const SaveContIntentHandler= {
-    canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'SaveContIntent';
-    },
-    handle(handlerInput) {
-        const {attributesManager, requestEnvelope} = handlerInput;
-        const sessionAttributes = attributesManager.getSessionAttributes();
-        const {intent} = requestEnvelope.request;
-        
-        if(intent.confirmationSatus === "CONFIRMED"){
-            const cont_name = Alexa.getSlotValue(requestEnvelope, "cont_name");
-            const cont_valor = Alexa.getSlotValue(requestEnvelope, "cont_valor");
-            const cont_venc = Alexa.getSlotValue(requestEnvelope, "cont_venc");
-            const cont_period = Alexa.getSlotValue(requestEnvelope, "cont_period");
-            
-            sessionAttributes["cont_name"] = cont_name;
-            sessionAttributes["cont_valor"] = cont_valor;
-            sessionAttributes["cont_venc"] = cont_venc;
-            sessionAttributes["cont_period"] = cont_period;
-            return VerContaIntentHandler.handle(handlerInput);
-        }
 
-        return handlerInput.responseBuilder
-            //.speak(speakOutput)
-            //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
-            .getResponse();
-    }
-};*/
 
 const VerContaIntentHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'VerContaIntent';
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'VercontaIntent';
+    },
+    async handle(handlerInput) {
+        
+        const {intent} = requestEnvelope.request;
+        const {attributesManager, requestEnvelope} = handlerInput;
+        const sessionAttributes = attributesManager.getSessionAttributes();
+        
+        let cont_namep = Alexa.getSlotValue(requestEnvelope,cont_namep);
+        let cont_name = await attributesManager.getPersistentAttributes();
+        
+        
+        console.log(cont_name)
+        
+        
+        
+        const speakOutput = cont_namep;
+        
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            //.reprompt(constants.REPROMPT_MSG)
+            .getResponse();
+    }
+};
+
+const AulasIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AulasIntent';
     },
     handle(handlerInput) {
-        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-        const cont_name = sessionAttributes["cont_name"];
-        const cont_valor = sessionAttributes["cont_valor"];
-        const cont_venc = sessionAttributes["cont_venc"];
-        const cont_period = sessionAttributes["cont_period"];
-        //const sessionCounter = sessionAttributes ["sessionCounter"];
-        
-        
+        const speakOutput = `Hoje você tem aula de matemática, português e educação física` + ' . ' + constants.REPROMPT_MSG;
+
         return handlerInput.responseBuilder
-            .speak(cont_name)
+            .speak(speakOutput)
+            .reprompt(constants.REPROMPT_MSG)
             .getResponse();
+    }
+};
+
+const AvaliacoesIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AvaliacoesIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = 'As suas notas em, Português, são: primeira avaliação: nove, segunda avaliação: dez, terceira avaliação: dez. Em matemática suas notas são: primeira avaliação: dez, segunda avaliação: dez, e terceira avaliação: dez' + ` . ` + constants.REPROMPT_MSG;
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(constants.REPROMPT_MSG)
+            .getResponse();
+    }
+};
+
+
+const RematriculaIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RematriculaIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = 'Certo! Vamos lá! A aluna, Marina, no próximo ano irá para o Ensino fundamental do segundo ano. A anuidade está no valor de quarenta e oito mil, quinhentos e noventa e cinco reais e oitenta e quatro centavos. Você pode escolher pagar em doze parcélas iguais no valor quatro mil, e noventa e quatro reais e sessanta e cinco centavos. ou você pode pagar em treze parcélas iguais, no valor de, três mil setecentos e trinta e oito reais e quatroze centavos. Caso deseje mais informações, entre em contato no telefone, trinta e três, trinta e quatro, sessenta e três, zero zero' + ` . ` + constants.REPROMPT_MSG;
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(constants.REPROMPT_MSG)
+            .getResponse();
+    }
+};
+
+
+const EventoIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'EventoIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = 'O próximo evento da escola é a Semana da criança, que inicia no dia três de outubro e vai até o dia seis de outubro , ' + constants.REPROMPT_MSG;
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(constants.REPROMPT_MSG)
+            .getResponse();
+    }
+};
+
+
+const CadastrarAlunoIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'CadastrarAlunoIntent';
+    },
+    async handle(handlerInput) {
+
+        const {attributesManager, requestEnvelope} = handlerInput;
+        // the attributes manager allows us to access session attributes
+        const sessionAttributes = attributesManager.getSessionAttributes();
+        const {intent} = requestEnvelope.request;
+
+        let speakOutput = constants.OPERACAO_CANCELADA + constants.REPROMPT_MSG 
+        console.log(`----- CONFIRMACAO = ${intent.confirmationStatus}`);
+        if (intent.confirmationStatus === 'CONFIRMED') {
+            console.log(`----- ENTROU em confirmado`);
+            //Verifica se o usuário confirmou a intenção.
+            let nome = Alexa.getSlotValue(requestEnvelope, 'nome');
+            let matricula = Alexa.getSlotValue(requestEnvelope, 'matricula');
+            
+        
+            let nomeAttributes = {
+                "nome" : nome,
+                "matricula" : matricula 
+            };
+        
+            attributesManager.setPersistentAttributes(nomeAttributes);
+            await attributesManager.savePersistentAttributes();
+            
+            
+            speakOutput = `<speak>O aluno ${nome}, com a matrícula <say-as interpret-as="digits"> ${matricula}</say-as> foi cadastrado com sucesso !` + constants.REPROMPT_MSG + `</speak>`;
+        }
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(constants.REPROMPT_MSG)
+            .getResponse();
+            
     }
 };
 
@@ -164,7 +246,7 @@ const CancelAndStopIntentHandler = {
                 || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.StopIntent');
     },
     handle(handlerInput) {
-        const speakOutput = 'Adeus';
+        const speakOutput = 'Goodbye!';
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -234,7 +316,7 @@ const ErrorHandler = {
         return true;
     },
     handle(handlerInput, error) {
-        const speakOutput = 'Desculpe não consigo atender a esta solicitação';
+        const speakOutput = 'Sorry, I had trouble doing what you asked. Please try again.';
         console.log(`~~~~ Error handled: ${JSON.stringify(error)}`);
 
         return handlerInput.responseBuilder
@@ -244,43 +326,24 @@ const ErrorHandler = {
     }
 };
 
-const LoadAttributesRequestInterceptor = {
-    async process(handlerInput){
-        const {attributesManager, requestEnvelope} = handlerInput;
-        if (Alexa.isNewSession(requestEnvelope)){
-            const persistentAttributes = await attributesManager.getPersistenceAttributes() || {};
-            console.log(" Carregando do armazenamento persistente" + JSON.stringify(persistentAttributes));
-            attributesManager.setSessionAttributes(persistentAttributes);
-        }
-    }
-};
-
-const SaveAttributesResponseInterceptor = {
-    async process(handlerInput,response){
-        if(!response) return;
-        const {attributesManager, requestEnvelope} = handlerInput;
-        const sessionAttributes = attributesManager.getSessionAttributes();
-        const shouldEndSession = (typeof response.shouldEndSession === "undefined" ? true : response.shouldEndSession);
-        if (shouldEndSession || Alexa.getRequestType(requestEnvelope)=== "SessionEndedRequest") {
-            sessionAttributes["sessionCounter"] = sessionAttributes["sessionCounter"] ? sessionAttributes ["sessionCounter"] + 1: 1;
-            console.log("Salvando para o armazenamento persistente" + JSON.stringify(sessionAttributes));
-            attributesManager.setPersistentAttributes(sessionAttributes);
-            await attributesManager.savePersistentAttributes();
-        }
-    }
-};
-
 /**
  * This handler acts as the entry point for your skill, routing all request and response
  * payloads to the handlers above. Make sure any new handlers or interceptors you've
  * defined are included below. The order matters - they're processed top to bottom 
  * */
 exports.handler = Alexa.SkillBuilders.custom()
+    .withPersistenceAdapter(
+            new persistenceAdapter.S3PersistenceAdapter({bucketName:process.env.S3_PERSISTENCE_BUCKET})
+    )
     .addRequestHandlers(
         LaunchRequestHandler,
+        HelloWorldIntentHandler,
         CadContaIntentHandler,
         VerContaIntentHandler,
-        HelloWorldIntentHandler,
+        EventoIntentHandler,
+        AulasIntentHandler,
+        RematriculaIntentHandler,
+        AvaliacoesIntentHandler,
         HelpIntentHandler,
         CancelAndStopIntentHandler,
         FallbackIntentHandler,
@@ -288,10 +351,5 @@ exports.handler = Alexa.SkillBuilders.custom()
         IntentReflectorHandler)
     .addErrorHandlers(
         ErrorHandler)
-    //.addRequestInterceptors(
-    //    LoadAttributesRequestInterceptor)
-    .addResponseInterceptors(
-        SaveAttributesResponseInterceptor)
     .withCustomUserAgent('sample/hello-world/v1.2')
-    .withPersistenceAdapter(persistenceAdapter)
     .lambda();
