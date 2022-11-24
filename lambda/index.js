@@ -11,11 +11,11 @@ const LaunchRequestHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
     },
-    handle(handlerInput) {
+    async handle(handlerInput) {
         const speakOutput = constants.WELCOME_MSG;
         
         const attributesManager = handlerInput.attributesManager;
-        const persistentAttributes = attributesManager.getPersistentAttributes();
+        let persistentAttributes = await attributesManager.getPersistentAttributes();
         
         inicializaS3(attributesManager, persistentAttributes)
         
@@ -27,10 +27,11 @@ const LaunchRequestHandler = {
 };
 
 async function inicializaS3(attributesManager, persistentAttributes){
-    //console.log(`---- COMECOU O SINCRONISMO S3  `);
+    console.log(`---- COMECOU O SINCRONISMO S3  `);
         //caso não tenha nenhum medicamento ainda, cria um campo para ele
-    if (!persistentAttributes.nomeAttributes) {
-        persistentAttributes.nomeAttributes = [];
+    if (!persistentAttributes.cont_nomeAttributes) {
+        console.log(`LIMPOU`);
+        persistentAttributes.cont_nomeAttributes = [];
     }
     attributesManager.setPersistentAttributes(persistentAttributes);
     await attributesManager.savePersistentAttributes();
@@ -71,6 +72,7 @@ const CadContaIntentHandler = {
             let cont_period = Alexa.getSlotValue(requestEnvelope, 'cont_period');
             console.log(`----- CONFIRMACAO = ${intent.confirmationStatus}`);
             console.log(cont_name,cont_valor,cont_venc,cont_period);
+            //let nomeAttributes = attributesManager.getPersistentAttributes({});
         
             let nomeAttributes = {
                 "cont_name" : cont_name,
@@ -78,7 +80,6 @@ const CadContaIntentHandler = {
                 "cont_venc" : cont_venc,
                 "cont_period": cont_period
             };
-        
             attributesManager.setPersistentAttributes(nomeAttributes);
             await attributesManager.savePersistentAttributes();
          }
@@ -95,33 +96,36 @@ const CadContaIntentHandler = {
 const VerContaIntentHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'VercontaIntent';
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'VerContaIntent';
     },
-    async handle(handlerInput) {
+     async handle(handlerInput) {
         
-        const {intent} = requestEnvelope.request;
-        const {attributesManager, requestEnvelope} = handlerInput;
-        const sessionAttributes = attributesManager.getSessionAttributes();
+        //const {intent} = requestEnvelope.request;
+        const attributesManager = handlerInput.attributesManager;
+        const persistentAttributes = await attributesManager.getPersistentAttributes();
+        const  requestEnvelope = handlerInput;
+        let speakOutput;
+        var cont_namep = Alexa.getSlotValue(requestEnvelope,cont_namep);
         
-        let cont_namep = Alexa.getSlotValue(requestEnvelope,cont_namep);
-        let cont_name = await attributesManager.getPersistentAttributes();
-        
-        
-        console.log(cont_name)
-        
-        
-        
-        const speakOutput = cont_namep;
-        
-
+         /*if ((!persistentAttributes(cont_name)) || (persistentAttributes.cont_name.length === 0)){
+              speakOutput = "Não há conta cadastrada";
+        }
+        else{*/
+            var cont_name = persistentAttributes.cont_name;
+            var cont_valor = persistentAttributes.cont_valor;
+            var cont_venc = persistentAttributes.cont_venc;
+            var cont_period = persistentAttributes.cont_period;
+            speakOutput = `A conta ${cont_namep} tem o valor de ${cont_valor} com o vencimento na data ${cont_venc}. Essa conta se repetirá ${cont_period}`;
+            //}
+            
+        console.log(`${cont_namep} ${cont_name} ${cont_valor} ${cont_venc} ${cont_period}`);
         return handlerInput.responseBuilder
             .speak(speakOutput)
-            //.reprompt(constants.REPROMPT_MSG)
             .getResponse();
     }
 };
 
-const AulasIntentHandler = {
+/*const AulasIntentHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AulasIntent';
@@ -222,7 +226,7 @@ const CadastrarAlunoIntentHandler = {
             .getResponse();
             
     }
-};
+};*/
 
 const HelpIntentHandler = {
     canHandle(handlerInput) {
@@ -246,7 +250,7 @@ const CancelAndStopIntentHandler = {
                 || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.StopIntent');
     },
     handle(handlerInput) {
-        const speakOutput = 'Goodbye!';
+        const speakOutput = 'Adeus';
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -264,7 +268,7 @@ const FallbackIntentHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.FallbackIntent';
     },
     handle(handlerInput) {
-        const speakOutput = 'Sorry, I don\'t know about that. Please try again.';
+        const speakOutput = 'Desculpe, não sei sobre isso. Tente outra coisa.';
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -298,7 +302,7 @@ const IntentReflectorHandler = {
     },
     handle(handlerInput) {
         const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
-        const speakOutput = `You just triggered ${intentName}`;
+        const speakOutput = `Voce acionou ${intentName}`;
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -316,7 +320,7 @@ const ErrorHandler = {
         return true;
     },
     handle(handlerInput, error) {
-        const speakOutput = 'Sorry, I had trouble doing what you asked. Please try again.';
+        const speakOutput = 'Desculpe, mas não consigo entender o que está dizendo. Pode tentar novamente?';
         console.log(`~~~~ Error handled: ${JSON.stringify(error)}`);
 
         return handlerInput.responseBuilder
@@ -337,13 +341,13 @@ exports.handler = Alexa.SkillBuilders.custom()
     )
     .addRequestHandlers(
         LaunchRequestHandler,
-        HelloWorldIntentHandler,
+        //HelloWorldIntentHandler,
         CadContaIntentHandler,
         VerContaIntentHandler,
-        EventoIntentHandler,
-        AulasIntentHandler,
-        RematriculaIntentHandler,
-        AvaliacoesIntentHandler,
+        //EventoIntentHandler,
+        //AulasIntentHandler,
+        //RematriculaIntentHandler,
+        //AvaliacoesIntentHandler,
         HelpIntentHandler,
         CancelAndStopIntentHandler,
         FallbackIntentHandler,
