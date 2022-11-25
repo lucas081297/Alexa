@@ -99,24 +99,34 @@ const VerContaIntentHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'VerContaIntent';
     },
      async handle(handlerInput) {
-        
+         
+        const {requestEnvelope} = handlerInput;
         //const {intent} = requestEnvelope.request;
         const attributesManager = handlerInput.attributesManager;
         const persistentAttributes = await attributesManager.getPersistentAttributes();
-        const  requestEnvelope = handlerInput;
-        let speakOutput;
-        var cont_namep = Alexa.getSlotValue(requestEnvelope,cont_namep);
+        //const  requestEnvelope = handlerInput;
+        var cont_namep = Alexa.getSlotValue(requestEnvelope,"cont_namep");
+        let speakOutput = cont_namep;
         
-         /*if ((!persistentAttributes(cont_name)) || (persistentAttributes.cont_name.length === 0)){
+         if ((!persistentAttributes.cont_name) || (persistentAttributes.cont_name.length === 0)){
               speakOutput = "Não há conta cadastrada";
         }
-        else{*/
+        else{
             var cont_name = persistentAttributes.cont_name;
             var cont_valor = persistentAttributes.cont_valor;
             var cont_venc = persistentAttributes.cont_venc;
             var cont_period = persistentAttributes.cont_period;
-            speakOutput = `A conta ${cont_namep} tem o valor de ${cont_valor} com o vencimento na data ${cont_venc}. Essa conta se repetirá ${cont_period}`;
-            //}
+            speakOutput = `A conta ${cont_namep} tem o valor de ${cont_valor} com o vencimento na data ${cont_venc}.`;
+            }
+            if(cont_period==="0"){
+                speakOutput +="A conta não irá se repetir";
+            }
+            else if(cont_period==="1"){
+                speakOutput+=`A conta irá se repetir a cada ${cont_period} mes.`;
+            }
+            else{
+                speakOutput+=`A conta irá se repetir a cada ${cont_period} meses.`;
+            }
             
         console.log(`${cont_namep} ${cont_name} ${cont_valor} ${cont_venc} ${cont_period}`);
         return handlerInput.responseBuilder
